@@ -2,18 +2,19 @@ from tika import parser
 import os
 import shutil
 import glob
-
+import datetime
 
 def run(directory):
     # Check to see if the processed folder exists
-    procdir = directory + "/processed/"
-    os.makedirs(procdir, exist_ok=True)
+    x = datetime.datetime.now()
+    proc_dir = directory + "/Processed-" + x.strftime("%G-%m-%d")
+    os.makedirs(proc_dir, exist_ok=True)
 
     # Open the import file
-    outfile = open(directory + "/import-data.csv", "w+")
+    out_file = open(directory + "/import-data.csv", "w+")
 
     # Print a header
-    printheader(outfile)
+    print_header(out_file)
 
     # Retrieve all of the files in the current director
     files = glob.glob(directory + '/*.pdf')
@@ -21,23 +22,22 @@ def run(directory):
     # Iterate the reports
     for f in files:
         # Parse the current report
-        parsereport(f, outfile)
+        parse_report(f, out_file)
 
         # Move the current file into the processed folder
-        shutil.move(f, procdir + "/" + os.path.basename(f))
+        shutil.move(f, proc_dir + "/" + os.path.basename(f))
 
     # close the file
-    outfile.close()
+    out_file.close()
 
 
-def parsereport(infile, outfile):
-    raw = parser.from_file(infile)
+def parse_report(in_file, out_file):
+    raw = parser.from_file(in_file)
     text = raw['content']
 
     # Grab our counts
     data = {
-        "date": os.path.splitext(os.path.basename(infile))[0],
-        "valid": text.count("Access Granted"),
+        "date": os.path.splitext(os.path.basename(in_file))[0],
         "invalid": text.count("Invalid"),
         "medicine": text.count("Medicine"),
         "dental": text.count("Dental"),
@@ -46,33 +46,39 @@ def parsereport(infile, outfile):
     }
 
     # Output our counts
-    printrow(data, outfile)
+    print_rows(data, out_file)
 
 
-def printheader(outfile):
-    outfile.write("Report Date,"
-                  "Valid Badge Count,"
-                  "Invalid Badge Count,"
-                  "School of Medicine Count,"
-                  "School of Dentistry Count,"
-                  "School of Nursing Count,"
-                  "School of Public Health Count\n")
+def print_header(out_file):
+    out_file.write("Report Date,"
+                   "School,"
+                   "Count\n")
 
 
-def printrow(data, outfile):
-    outfile.write(f'{data["date"]}, '
-                  f'{data["valid"]}, '
-                  f'{data["invalid"]}, '
-                  f'{data["medicine"]}, '
-                  f'{data["dental"]}, '
-                  f'{data["nursing"]}, '
-                  f'{data["public"]}')
+def print_rows(data, out_file):
+    out_file.write(f"{data['date']}, "
+                   "School of Medicine,"
+                   f"{data['medicine']}\n")
 
-    outfile.write("\n")
+    out_file.write(f"{data['date']}, "
+                   "School of Dentistry,"
+                   f"{data['dental']}\n")
+
+    out_file.write(f"{data['date']}, "
+                   "School of Nursing,"
+                   f"{data['nursing']}\n")
+
+    out_file.write(f"{data['date']}, "
+                   "School of Public Health,"
+                   f"{data['public']}\n")
+
+    out_file.write(f"{data['date']}, "
+                   "Invalid,"
+                   f"{data['invalid']}\n")
 
 
 if __name__ == '__main__':
-    testdir = "/Users/dking/OneDrive - University of Louisville/Kornhauser/2021/Badge Data/Reports"
-    run(testdir)
+    test_dir = "/Users/dking/OneDrive - University of Louisville/Kornhauser/2021/Badge Data/Reports"
+    run(test_dir)
 
     # run(os.getcwd())
